@@ -1,0 +1,350 @@
+openapi: 3.1.0
+info:
+  title: Film Management API
+  version: 1.0.0
+  description: API для управления каталогом фильмов
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+
+paths:
+  /films:
+    get:
+      operationId: listFilms
+      summary: Получить список фильмов
+      description: Возвращает список всех фильмов с возможностью пагинации
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Film'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/DefaultError'
+    post:
+      operationId: createFilm
+      summary: Добавить новый фильм
+      description: Создает новую запись о фильме
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFilmRequest'
+      responses:
+        '201':
+          description: Фильм успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Film'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/DefaultError'
+
+  /films/{id}:
+    get:
+      operationId: getFilm
+      summary: Получить фильм по ID
+      description: Возвращает полную информацию о фильме
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Film'
+        '404':
+          description: Фильм не найден
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/DefaultError'
+    
+    put:
+      operationId: updateFilm
+      summary: Обновить фильм
+      description: Полностью обновляет информацию о фильме
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFilmRequest'
+      responses:
+        '200':
+          description: Фильм успешно обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Film'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/DefaultError'
+    
+    delete:
+      operationId: deleteFilm
+      summary: Удалить фильм
+      description: Удаляет фильм из системы
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Фильм успешно удалён
+        '404':
+          description: Фильм не найден
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        default:
+          $ref: '#/components/responses/DefaultError'
+
+components:
+  schemas:
+    Film:
+      type: object
+      description: Полное представление фильма в системе
+      required:
+        - id
+        - title
+        - year
+        - country
+        - rating
+        - actors
+        - director
+        - age_rating
+        - duration
+      properties:
+        id:
+          type: string
+          description: Уникальный идентификатор фильма
+          readOnly: true
+          format: uuid
+        title:
+          type: string
+          description: Название фильма
+          minLength: 1
+          maxLength: 256
+        year:
+          type: integer
+          description: Год выпуска фильма
+          minimum: 1888
+          maximum: 2100
+        country:
+          type: string
+          description: Страна производства
+          minLength: 1
+          maxLength: 100
+        rating:
+          type: number
+          format: float
+          description: Рейтинг фильма
+          minimum: 0
+          maximum: 10
+        actors:
+          type: array
+          description: Список актёров
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+        director:
+          type: string
+          description: Режиссёр
+          minLength: 1
+          maxLength: 100
+        age_rating:
+          type: string
+          description: Возрастное ограничение
+          enum: [0+, 6+, 12+, 16+, 18+]
+          example: "0+"
+        duration:
+          type: integer
+          minimum: 1
+          maximum: 600
+          example: 120
+
+    CreateFilmRequest:
+      type: object
+      description: Данные для создания нового фильма
+      required:
+        - title
+        - year
+        - country
+        - director
+        - age_rating
+        - duration
+      properties:
+        title:
+          type: string
+          description: Название фильма
+          minLength: 1
+          maxLength: 256
+        year:
+          type: integer
+          description: Год выпуска фильма
+          minimum: 1888
+          maximum: 2100
+        country:
+          type: string
+          description: Страна производства
+          minLength: 1
+          maxLength: 100
+        director:
+          type: string
+          description: Режиссёр
+          minLength: 1
+          maxLength: 100
+        age_rating:
+          type: string
+          description: Возрастное ограничение
+          enum: [0+, 6+, 12+, 16+, 18+]
+          example: "0+"
+        duration:
+          type: integer
+          minimum: 1
+          maximum: 600
+          example: 120
+    
+    UpdateFilmRequest:
+      type: object
+      description: Данные для обновления фильма
+      required:
+        - title
+        - year
+        - country
+        - rating
+        - actors
+        - director
+        - age_rating
+        - duration
+      properties:
+        title:
+          type: string
+          description: Название фильма
+          minLength: 1
+          maxLength: 256
+        year:
+          type: integer
+          description: Год выпуска фильма
+          minimum: 1888
+          maximum: 2100
+        country:
+          type: string
+          description: Страна производства
+          minLength: 1
+          maxLength: 100
+        rating:
+          type: number
+          format: float
+          description: Рейтинг фильма
+          minimum: 0
+          maximum: 10
+        actors:
+          type: array
+          description: Список актёров
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+        director:
+          type: string
+          description: Режиссёр
+          minLength: 1
+          maxLength: 100
+        age_rating:
+          type: string
+          description: Возрастное ограничение
+          enum: [0+, 6+, 12+, 16+, 18+]
+          example: "0+"
+        duration:
+          type: integer
+          minimum: 1
+          maximum: 600
+          example: 120
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DefaultError:
+      description: Ошибка
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
